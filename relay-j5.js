@@ -32,6 +32,14 @@ class RelayJ5 extends EventEmitter{
         } catch (e) {
           rej(false)
         }
+        this,this.__fiveboard.on("fail", (e) => {
+          this.emit("error", {
+            type: "CONNECTION_FAILED",
+            message: `Connection Failed. Check the hardware configuration`,
+            details: e.message
+          })
+          rej(false)
+        })
         this.__fiveboard.on("error", (e) => {
           this.emit("error", {
             type: "PERMISSION_DENIED",

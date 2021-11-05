@@ -41,6 +41,7 @@ const main = async () =>{
   try {
     await relay.connect();
   } catch (e) {
+    console.log(e)
     return;
   }
   for (let i = 0; i < 10; i++) {
