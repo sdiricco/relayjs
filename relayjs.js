@@ -1,37 +1,70 @@
 const EventEmitter = require('events');
-const defaultType = 'RelayJ5'
 
+const types = ['RelayJ5']
+const defaultType = types[0];
+
+const relays = [1, 2, 4, 8, 16];
 const ARDUINO_NANO_MAX_PIN = 19;
+const ON = 1;
+const OFF = 0;
 
 class RelayJS extends EventEmitter{
-  constructor (options = {}) {
+  constructor (relayCount = undefined) {
+    if (relayCount === undefined) {
+      throw('specifies the number of relay: [1, 2, 4, 8, 16]')
+    }
+    if (isNaN(relayCount)) {
+      throw('relayCount must be a number in range: [1, 2, 4, 8, 16]')
+    }
+    if (!relays.some(el => el === relayCount)) {
+      throw('relayCount must be a number in range: [1, 2, 4, 8, 16]')
+    }
     super();
-
-    let type = options.type ? options.type : defaultType;
-    let relays = options.relays ? options.relays : ARDUINO_NANO_MAX_PIN;
-
-    this.__relay = undefined;
+    this.__relayHw = undefined;
     this.__port = undefined;
     this.__relays = relays;
 
-    if (type === 'RelayJ5') {
+    if (defaultType === 'RelayJ5') {
         const {RelayJ5} = require('./relay-j5');
-        this.__relay = new RelayJ5(ARDUINO_NANO_MAX_PIN)
-    }else{
-        throw(`type ${type} not valid`)
+        this.__relayHw = new RelayJ5(ARDUINO_NANO_MAX_PIN)
     }
     
-    this.__relay.on("error", (e) => {
+    this.__relayHw.on("error", (e) => {
         this.emit("error", e)
     })
   }
   async connect(options = undefined) {
-    await this.__relay.connect(options);
-    this.__port = this.__relay.__port;
+    await this.__relayHw.connect(options);
+    this.__port = this.__relayHw.__port;
   }
 
-  async setRelay(n = undefined, value = undefined) {
-      await this.__relay.setRelay(n, value);
+  setRelay(n = undefined, value = undefined) {
+    if (!this.__relayHw.isConnected) {
+      throw(new Error('Connect the board before'));
+    }
+    if (n === undefined) {
+      throw(new Error('relayNumber cannot be undefined'));
+    }
+    if (value === undefined) {
+      throw(new Error('value cannot be undefined'));
+    }
+    if (isNaN(n)) {
+      throw(new Error('n must be Number type'));
+    }
+    if (n < 0 || n > ARDUINO_NANO_MAX_PIN) {
+      throw(new Error(`n must be in range [${0} - ${ARDUINO_NANO_MAX_PIN}]`));
+    }
+    if (isNaN(value)) {
+      throw(new Error('value must be Number type'));
+    }
+    if (value < 0 || value > 1) {
+      throw(new Error('value must be in range [0 - 1]'));
+    }
+    try {
+      this.__relayHw.setRelay(n, value);
+    } catch (e) {
+      throw(e)
+    }
   }
 }
 

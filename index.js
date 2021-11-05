@@ -9,36 +9,12 @@ let wait = (ms) => {
 
 
 const main = async () =>{
-
-  /*
-  const relay = new RelayJ5();
-  relay.on("error", (msg)=>{
-    console.log(msg)
-  })
+  let relay = undefined;
   try {
-    await relay.connect();
-  } catch (e) {
-    return;
-  }
-  for (let i = 0; i < 10; i++) {
-    try {
-      relay.setRelay(13, ON);
-      await wait(100);
-      relay.setRelay(13, OFF);
-      await wait(100);
-    } catch (e) {
-      console.error(e.message);
-    }
-  }
-  console.log(relay.__port)
-  relay.disconnect();
-  */
-
-  const relay = new RelayJS();
-  relay.on("error", (msg)=>{
-    console.log(msg)
-  })
-  try {
+    relay = new RelayJS(8);
+    relay.on("error", (msg)=>{
+      console.log(msg)
+    })
     await relay.connect();
   } catch (e) {
     console.log(e)

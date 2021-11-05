@@ -1,19 +1,32 @@
 const five = require("johnny-five");
 const EventEmitter = require('events');
 
+const relays = [1, 2, 4, 8, 16];
 const ARDUINO_NANO_MAX_PIN = 19;
 const ON = 1;
 const OFF = 0;
 
 class RelayJ5 extends EventEmitter{
-  constructor () {
+  constructor (relayCount = undefined) {
     super();
+    this.__relayCount = relayCount;
     this.__fiveboard = undefined;
-    this.__connected = undefined;
+    this.__isConnected = undefined;
     this.__port = undefined;
     this.connect = this.connect.bind(this);
     this.setRelay = this.setRelay.bind(this);
   }
+
+  get relayCount(){
+    return this.__relayCount;
+  }
+  get isConnected(){
+    return this.__isConnected;
+  }
+  get port(){
+    return this.__port;
+  }
+
   async connect(options = undefined) {
     return new Promise((res, rej) => {
       if (this.__fiveboard === undefined) {
@@ -54,13 +67,14 @@ class RelayJ5 extends EventEmitter{
             message: "Board disconnected",
             details: ""
           })
+          this.__isConnected = false;
         })
         this.__fiveboard.on("ready", () => {
           for (let i = 0; i < ARDUINO_NANO_MAX_PIN; i++) {
             this.__fiveboard.pinMode(i, five.Pin.OUTPUT);
           }
           this.__port = this.__fiveboard.port;
-          this.__connected = true;
+          this.__isConnected = true;
           res(true);
         })
       }else{
@@ -83,33 +97,12 @@ class RelayJ5 extends EventEmitter{
     })
   }
 
-  disconnect(){
-    delete this.__fiveboard;
-  }
-
   setRelay(n = undefined, value = undefined) {
-    if (!this.__connected) {
-      throw(new Error('Connect the board before'));
+    try {
+      this.__fiveboard.digitalWrite(n, value)
+    } catch (e) {
+      throw(e)
     }
-    if (n === undefined) {
-      throw(new Error('n cannot be undefined'));
-    }
-    if (value === undefined) {
-      throw(new Error('value cannot be undefined'));
-    }
-    if (isNaN(n)) {
-      throw(new Error('n must be Number type'));
-    }
-    if (n < 0 || n > ARDUINO_NANO_MAX_PIN) {
-      throw(new Error(`n must be in range [${0} - ${ARDUINO_NANO_MAX_PIN}]`));
-    }
-    if (isNaN(value)) {
-      throw(new Error('value must be Number type'));
-    }
-    if (value < 0 || value > 1) {
-      throw(new Error('n must be in range [0 - 1]'));
-    }
-    this.__fiveboard.digitalWrite(n, value)
   }
 }
 
