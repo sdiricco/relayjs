@@ -1,4 +1,5 @@
 const EventEmitter = require('events');
+const { resolve } = require('path');
 
 const types = ['RelayJ5']
 const defaultType = types[0];
@@ -35,6 +36,7 @@ class RelayJs extends EventEmitter{
     this.__relayHw.on("error", (e) => {
         this.emit("error", e)
     })
+
   }
 
   static getRelaysFamily(){
@@ -53,7 +55,7 @@ class RelayJs extends EventEmitter{
     this.__port = this.__relayHw.__port;
   }
 
-  set(n = undefined, value = undefined) {
+  async set(n = undefined, value = undefined) {
 
     if (!this.__relayHw.isConnected) {
       throw(new Error('Connect the board before'));
@@ -79,13 +81,13 @@ class RelayJs extends EventEmitter{
     }
 
     try {
-      this.__relayHw.set(n, value);
+      await this.__relayHw.set(n, value);
     } catch (e) {
       throw(e)
     }
   }
 
-  get(n = undefined){
+  async get(n = undefined){
 
     let value = undefined;
 
@@ -103,7 +105,7 @@ class RelayJs extends EventEmitter{
     }
 
     try {
-      value = this.__relayHw.get(n);
+      value = await this.__relayHw.get(n);
     } catch (e) {
       throw(e)
     }
@@ -111,7 +113,7 @@ class RelayJs extends EventEmitter{
     return value;
   }
 
-  setMulti(relays = []){
+  async setMulti(relays = []){
     if (relays === undefined || relays.length === 0 ) {
       throw(new Error('relaysValue shall be an array of value, eg [0, 1, 0, 1, 1]'));
     }
@@ -120,18 +122,19 @@ class RelayJs extends EventEmitter{
     }
     for (let i = 0; i < relays.length; i++) {
       try {
-        this.set(i, relays[i])
+        await this.set(i, relays[i])
       } catch (e) {
         throw(new Error(`Relay ${i}: ${e.message}`))
       }
     }
   }
 
-  getAll(){
+  async getAll(){
     let relays = [];
     for (let i = 0; i < this.__relayCount; i++) {
       try {
-        relays.push(this.get(i))
+        const value = await this.get(i)
+        relays.push(value)
       } catch (e) {
         throw(new Error(`Relay ${i}: ${e.message}`))
       }

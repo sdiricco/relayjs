@@ -42,3 +42,9 @@ relayjs.connect().then(()=>{
 });
 ```
 
+Read the state of relays
+
+```javascript
+
+```
+

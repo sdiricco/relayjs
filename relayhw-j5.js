@@ -11,10 +11,12 @@ const ON = 1;
 class RelayHw extends EventEmitter{
   constructor (relayCount = undefined) {
     super();
+    this.__relays = [];
     this.__relayCount = relayCount;
     this.__fiveboard = undefined;
     this.__isConnected = undefined;
     this.__port = undefined;
+
   }
 
   get relayCount(){
@@ -108,33 +110,45 @@ class RelayHw extends EventEmitter{
 
   __initializeHw(pins = ARDUINO_NANO_MAX_PIN){
     for (let i = 0; i < pins; i++) {
-      this.__fiveboard.pinMode(i, OUT);
-      this.__fiveboard.digitalWrite(i, OFF)
+      this.__relays[i] = new five.Pin(i);
+      this.__relays[i].low();
     }
   }
 
   __deinitializeHw(pins = ARDUINO_NANO_MAX_PIN){
     for (let i = 0; i < pins; i++) {
-      this.__fiveboard.digitalWrite(i, OFF)
+      this.__relays[i].low();
     }
   }
 
-  set(n = undefined, value = undefined) {
-    try {
-      this.__fiveboard.digitalWrite(n, value)
-    } catch (e) {
-      throw(e)
-    }
+  async set(n = undefined, value = undefined) {
+    return new Promise((res, rej)=>{
+      try {
+        this.__relays[n].write(value)
+        this.__relays[n].query((state)=>{
+          if (state.value === value) {
+            res(true);
+          }else{
+            rej(false);
+          }
+        })
+      } catch (e) {
+        throw(e)
+      }
+    })
   }
 
-  get(n = undefined){
-    let value = undefined;
-    try {
-      value = this.__fiveboard.digitalRead(n)
-    } catch (e) {
-      throw(e)
-    }
-    return value;
+  async get(n = undefined){
+    return new Promise((res, rej) =>{
+      try {
+        this.__relays[n].query((state)=>{
+          res(state.value);
+        })
+      } catch (e) {
+        rej(e)
+      }
+    })
+
   }
 }
 
