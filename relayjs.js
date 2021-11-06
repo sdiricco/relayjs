@@ -3,42 +3,58 @@ const EventEmitter = require('events');
 const types = ['RelayJ5']
 const defaultType = types[0];
 
-const relays = [1, 2, 4, 8, 16];
+const relaysFamily = [1, 2, 4, 8, 16];
 const ARDUINO_NANO_MAX_PIN = 19;
 const ON = 1;
 const OFF = 0;
 
-class RelayJS extends EventEmitter{
+class RelayJs extends EventEmitter{
   constructor (relayCount = undefined) {
+
     if (relayCount === undefined) {
       throw('specifies the number of relay: [1, 2, 4, 8, 16]')
     }
     if (isNaN(relayCount)) {
       throw('relayCount must be a number in range: [1, 2, 4, 8, 16]')
     }
-    if (!relays.some(el => el === relayCount)) {
+    if (!relaysFamily.some(el => el === relayCount)) {
       throw('relayCount must be a number in range: [1, 2, 4, 8, 16]')
     }
+
     super();
+
     this.__relayHw = undefined;
     this.__port = undefined;
-    this.__relays = relays;
+    this.__relayCount = relayCount;
 
     if (defaultType === 'RelayJ5') {
-        const {RelayJ5} = require('./relay-j5');
-        this.__relayHw = new RelayJ5(ARDUINO_NANO_MAX_PIN)
+        const {RelayHw} = require('./relayhw-j5');
+        this.__relayHw = new RelayHw(ARDUINO_NANO_MAX_PIN)
     }
     
     this.__relayHw.on("error", (e) => {
         this.emit("error", e)
     })
   }
+
+  static getRelaysFamily(){
+    return relaysFamily;
+  }
+
+  get port(){
+    return this.__port;
+  }
+  get relayCount(){
+    return this.__relayCount;
+  }
+
   async connect(options = undefined) {
     await this.__relayHw.connect(options);
     this.__port = this.__relayHw.__port;
   }
 
-  setRelay(n = undefined, value = undefined) {
+  set(n = undefined, value = undefined) {
+
     if (!this.__relayHw.isConnected) {
       throw(new Error('Connect the board before'));
     }
@@ -60,14 +76,31 @@ class RelayJS extends EventEmitter{
     if (value < 0 || value > 1) {
       throw(new Error('value must be in range [0 - 1]'));
     }
+
     try {
-      this.__relayHw.setRelay(n, value);
+      this.__relayHw.set(n, value);
     } catch (e) {
       throw(e)
     }
   }
+
+  setMulti(relays = []){
+    if (relays === undefined || relays.length === 0 ) {
+      throw(new Error('relaysValue shall be an array of value, eg [0, 1, 0, 1, 1]'));
+    }
+    if (relays.length > this.__relayCount){
+      throw(new Error(`You can set maximum ${this.__relayCount} relay`));ì
+    }
+    for (let i = 0; i < relays.length; i++) {
+      try {
+        this.set(i, relays[i])
+      } catch (e) {
+        throw(new Error(`Relay ${i}: ${e.message}`))
+      }
+    }
+  }
 }
 
-module.exports = {RelayJS}
+module.exports = {RelayJs, ON, OFF}
 
 

@@ -1,38 +1,15 @@
-const {RelayJ5, ON, OFF} = require('./relay-j5');
-const {RelayJS} = require('./relayjs');
+const {RelayJs, ON, OFF} = require('./relayjs');
 
-let wait = (ms) => {
-  return new Promise(res => {
-    setTimeout(()=> res(true), ms)
-  })
-} 
+const relays = [OFF, OFF, ON, ON, OFF];
 
-
-const main = async () =>{
-  let relay = undefined;
+const relayjs = new RelayJs(16);
+relayjs.on("error", (msg)=>{
+  console.log(msg)
+})
+relayjs.connect().then(()=>{
   try {
-    relay = new RelayJS(8);
-    relay.on("error", (msg)=>{
-      console.log(msg)
-    })
-    await relay.connect();
+    relayjs.setMulti(relays);
   } catch (e) {
-    console.log(e)
-    return;
+    console.log(e.message)
   }
-  for (let i = 0; i < 10; i++) {
-    try {
-      relay.setRelay(13, ON);
-      await wait(100);
-      relay.setRelay(13, OFF);
-      await wait(100);
-    } catch (e) {
-      console.error(e.message);
-    }
-  }
-  console.log(relay.__port)
-
-}
-
-main();
-
+});

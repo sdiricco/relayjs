@@ -1,20 +1,20 @@
 const five = require("johnny-five");
 const EventEmitter = require('events');
 
-const relays = [1, 2, 4, 8, 16];
+const TIMEOUT_CONNECT_MS = 2000;
 const ARDUINO_NANO_MAX_PIN = 19;
-const ON = 1;
-const OFF = 0;
 
-class RelayJ5 extends EventEmitter{
+const OUT = five.Pin.OUTPUT;
+const OFF = 0;
+const ON = 1;
+
+class RelayHw extends EventEmitter{
   constructor (relayCount = undefined) {
     super();
     this.__relayCount = relayCount;
     this.__fiveboard = undefined;
     this.__isConnected = undefined;
     this.__port = undefined;
-    this.connect = this.connect.bind(this);
-    this.setRelay = this.setRelay.bind(this);
   }
 
   get relayCount(){
@@ -29,23 +29,32 @@ class RelayJ5 extends EventEmitter{
 
   async connect(options = undefined) {
     return new Promise((res, rej) => {
+
       if (this.__fiveboard === undefined) {
         let __options = undefined;
         if (options === undefined) {
           __options = {
             repl: false,
             debug: false,
+            timeout: TIMEOUT_CONNECT_MS,
           }
         }
         else{
           __options = options
         }
+
+        //try to auto-connect
         try {
           this.__fiveboard = new five.Board(__options);
         } catch (e) {
           rej(false)
         }
-        this,this.__fiveboard.on("fail", (e) => {
+
+        //Event "fail", failed to connect.
+        //Typically when you try to open a connection to a board but it is
+        //not connected to the usb port or when the board does not have
+        //the correct firmware
+        this.__fiveboard.on("fail", (e) => {
           this.emit("error", {
             type: "CONNECTION_FAILED",
             message: `Connection Failed. Check the hardware configuration`,
@@ -53,6 +62,10 @@ class RelayJ5 extends EventEmitter{
           })
           rej(false)
         })
+
+        //Event "error", failed to connect.
+        //Typically when you try to open a connection when the board is already
+        //connected. This could happen when you use multiple software instances
         this.__fiveboard.on("error", (e) => {
           this.emit("error", {
             type: "PERMISSION_DENIED",
@@ -61,6 +74,9 @@ class RelayJ5 extends EventEmitter{
           })
           rej(false)
         })
+
+        //Event "close", board disconnected.
+        //Typically when the board is disconnected from the USB port
         this.__fiveboard.on("close", () => {
           this.emit("error", {
             type: "CLOSE_CONNECTION",
@@ -69,35 +85,41 @@ class RelayJ5 extends EventEmitter{
           })
           this.__isConnected = false;
         })
+
+        this.__fiveboard.on("exit", () => {
+          this.__deinitializeHw();
+          this.__isConnected = false;
+        })
+
+        //Event "ready", board successfully connected and ready to receive commands
         this.__fiveboard.on("ready", () => {
-          for (let i = 0; i < ARDUINO_NANO_MAX_PIN; i++) {
-            this.__fiveboard.pinMode(i, five.Pin.OUTPUT);
-          }
+          this.__initializeHw(ARDUINO_NANO_MAX_PIN);
           this.__port = this.__fiveboard.port;
           this.__isConnected = true;
           res(true);
         })
       }else{
-        if (this.__fiveboard && this.__fiveboard.port) {
-          this.emit("error", {
-            type: "PERMISSION_DENIED",
-            message: `Board already connected on ${port}`,
-            details: ""
-          })
-          rej(false)
-        }else{
-          this.emit("error", {
-            type: "UNKNOWN",
-            message: `something wrong during connection`,
-            details: ""
-          })
-          rej(false)
-        }
+        //board already connected to this software instance.
+        //Typically when you call multiple times connect() method
+        res(true);
       }
     })
   }
 
-  setRelay(n = undefined, value = undefined) {
+  __initializeHw(pins = ARDUINO_NANO_MAX_PIN){
+    for (let i = 0; i < pins; i++) {
+      this.__fiveboard.pinMode(i, OUT);
+      this.__fiveboard.digitalWrite(i, OFF)
+    }
+  }
+
+  __deinitializeHw(pins = ARDUINO_NANO_MAX_PIN){
+    for (let i = 0; i < pins; i++) {
+      this.__fiveboard.digitalWrite(i, OFF)
+    }
+  }
+
+  set(n = undefined, value = undefined) {
     try {
       this.__fiveboard.digitalWrite(n, value)
     } catch (e) {
@@ -106,6 +128,6 @@ class RelayJ5 extends EventEmitter{
   }
 }
 
-module.exports = {RelayJ5, ON, OFF}
+module.exports = {RelayHw}
 
 
