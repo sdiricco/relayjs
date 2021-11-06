@@ -38,11 +38,7 @@ relayjs.on("error", (msg)=>{
   console.log(msg)
 })
 relayjs.connect().then(()=>{
-  try {
-    relayjs.setMulti(relays);
-  } catch (e) {
-    console.log(e.message)
-  }
+  relayjs.setMulti(relays);
 });
 ```
 

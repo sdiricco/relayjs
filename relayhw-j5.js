@@ -126,6 +126,16 @@ class RelayHw extends EventEmitter{
       throw(e)
     }
   }
+
+  get(n = undefined){
+    let value = undefined;
+    try {
+      value = this.__fiveboard.digitalRead(n)
+    } catch (e) {
+      throw(e)
+    }
+    return value;
+  }
 }
 
 module.exports = {RelayHw}

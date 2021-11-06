@@ -61,14 +61,15 @@ class RelayJs extends EventEmitter{
     if (n === undefined) {
       throw(new Error('relayNumber cannot be undefined'));
     }
-    if (value === undefined) {
-      throw(new Error('value cannot be undefined'));
-    }
     if (isNaN(n)) {
       throw(new Error('n must be Number type'));
     }
     if (n < 0 || n > ARDUINO_NANO_MAX_PIN) {
       throw(new Error(`n must be in range [${0} - ${ARDUINO_NANO_MAX_PIN}]`));
+    }
+
+    if (value === undefined) {
+      throw(new Error('value cannot be undefined'));
     }
     if (isNaN(value)) {
       throw(new Error('value must be Number type'));
@@ -82,6 +83,32 @@ class RelayJs extends EventEmitter{
     } catch (e) {
       throw(e)
     }
+  }
+
+  get(n = undefined){
+
+    let value = undefined;
+
+    if (!this.__relayHw.isConnected) {
+      throw(new Error('Connect the board before'));
+    }
+    if (n === undefined) {
+      throw(new Error('relayNumber cannot be undefined'));
+    }
+    if (isNaN(n)) {
+      throw(new Error('n must be Number type'));
+    }
+    if (n < 0 || n > ARDUINO_NANO_MAX_PIN) {
+      throw(new Error(`n must be in range [${0} - ${ARDUINO_NANO_MAX_PIN}]`));
+    }
+
+    try {
+      value = this.__relayHw.get(n);
+    } catch (e) {
+      throw(e)
+    }
+
+    return value;
   }
 
   setMulti(relays = []){
@@ -98,6 +125,18 @@ class RelayJs extends EventEmitter{
         throw(new Error(`Relay ${i}: ${e.message}`))
       }
     }
+  }
+
+  getAll(){
+    let relays = [];
+    for (let i = 0; i < this.__relayCount; i++) {
+      try {
+        relays.push(this.get(i))
+      } catch (e) {
+        throw(new Error(`Relay ${i}: ${e.message}`))
+      }
+    }
+    return relays;
   }
 }
 
