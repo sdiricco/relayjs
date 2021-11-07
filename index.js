@@ -1,30 +1,35 @@
-const {RelayJs, ON, OFF} = require('./relayjs');
+const { RelayJs, ON, OFF } = require("./relayjs");
 
-const relays = [OFF, OFF, ON, ON, OFF, ON, OFF, OFF, ON, OFF, ON, ON, ON, ON, ON, OFF];
+const relays = [OFF, OFF, ON, ON, OFF, ON, OFF, OFF, ON, OFF];
 
+const relayjs = new RelayJs(16);
 
-let main = async () => {
+relayjs.on("error", (msg) => {
+  console.log(msg);
+});
 
-  const relayjs = new RelayJs(16);
-
-  relayjs.on("error", (msg)=>{
-    console.log(msg)
+relayjs
+  .connect()
+  .then(() => {
+    return relayjs.setMulti(relays);
   })
+  .then(() => {
+    return relayjs.get(2);
+  })
+  .then((r2) => {
+    console.log("r2", r2);
+    return relayjs.getAll();
+  })
+  .then((all) => {
+    console.log("all", all);
+  });
 
-  await relayjs.connect();
-  console.time("t")
-  await relayjs.setMulti(relays);
-  console.timeEnd("t")
-
-  console.time("t")
-  await relayjs.set(4, OFF);
-  console.timeEnd("t")
-
-  const r2 = await relayjs.get(2);
-  const all = await relayjs.getAll()
-    
-  console.log("r2", r2);
-  console.log("all", all);
-}
-
-main();
+/*
+Expected output
+r2 1
+all [
+  0, 0, 1, 1, 0, 1,
+  0, 0, 1, 0, 0, 0,
+  0, 0, 0, 0
+]
+*/

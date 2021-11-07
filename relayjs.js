@@ -9,7 +9,16 @@ const ARDUINO_NANO_MAX_PIN = 19;
 const ON = 1;
 const OFF = 0;
 
+/**
+ * 
+ * Class RelaysJs.
+ * @extends EventEmitter
+ */
 class RelayJs extends EventEmitter{
+  /**
+   * 
+   * @param {Number} relayCount - The number of relay board. 
+   */
   constructor (relayCount = undefined) {
 
     if (relayCount === undefined) {
@@ -30,7 +39,7 @@ class RelayJs extends EventEmitter{
 
     if (defaultType === 'RelayJ5') {
         const {RelayHw} = require('./relayhw-j5');
-        this.__relayHw = new RelayHw(ARDUINO_NANO_MAX_PIN)
+        this.__relayHw = new RelayHw({relayCount: ARDUINO_NANO_MAX_PIN})
     }
     
     this.__relayHw.on("error", (e) => {
@@ -39,16 +48,30 @@ class RelayJs extends EventEmitter{
 
   }
 
+  /**
+   * 
+   * @returns {Number[]} The relay board type supported
+   */
   static getRelaysFamily(){
     return relaysFamily;
   }
 
+  /**
+   * 
+   * @returns {String} The port connected to the relay board
+   */
   get port(){
     return this.__port;
   }
+
+  /**
+   * 
+   * @returns {String} The port connected to the relay board
+   */
   get relayCount(){
     return this.__relayCount;
   }
+
 
   async connect(options = undefined) {
     await this.__relayHw.connect(options);
