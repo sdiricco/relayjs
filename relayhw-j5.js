@@ -9,7 +9,7 @@ const OFF = 0;
 const ON = 1;
 
 
-class RelayHw extends EventEmitter {
+class RelayBoardHw extends EventEmitter {
 
 /**
  * @param {Object} Obj - Constructor options
@@ -162,4 +162,4 @@ class RelayHw extends EventEmitter {
   }
 }
 
-module.exports = { RelayHw };
+module.exports = { RelayBoardHw: RelayBoardHw };

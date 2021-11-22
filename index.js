@@ -2,7 +2,16 @@ const { RelayJs, ON, OFF } = require("./relayjs");
 
 const relays = [OFF, OFF, ON, ON, OFF, ON, OFF, OFF, ON, OFF];
 
-const relayjs = new RelayJs(16);
+const relayjs = new RelayJs({
+  relayCount: 16,
+  defaultType: 'NO',
+  relaysConfiguration: [
+    {
+      n: 12,
+      type: 'NC'
+    }
+  ]
+});
 
 relayjs.on("error", (msg) => {
   console.log(msg);
