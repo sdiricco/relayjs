@@ -17,7 +17,9 @@
   },
   "homepage": "https://github.com/sdiricco/relayjs#readme",
   "dependencies": {
-    "johnny-five": "^2.1.0",
-    "serialport": "^9.2.5"
+    "@sdiricco/boardjs": "^0.2.4"
+  },
+  "devDependencies": {
+    "prompt": "^1.2.0"
   }
 }
