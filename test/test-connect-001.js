@@ -36,6 +36,8 @@
      relay.on("error", (e) => {
        console.log("error raised:", e)
      });
+
+     console.log(relay.relays.length)
  
      console.log("connecting..");
      __connect = await relay.connect();

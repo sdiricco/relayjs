@@ -8,25 +8,26 @@ class RelayJs extends EventEmitter {
   constructor() {
     super();
     this.board = new Board();
+
     this.__relaysT = [];
 
-    this.__onError = this.__onError.bind(this);
     this.__initializePins = this.__initializeRelays.bind(this); 
 
     this.connect = this.connect.bind(this);
     this.disconnect = this.disconnect.bind(this);
     this.reset = this.reset.bind(this);
     this.write = this.write.bind(this);
+
+    this.board.on("error", (e)=>{
+      this.emit('error', e)
+    });
+
   }
 
   async __initializeRelays(){
     this.board.pins.forEach((el)=>{
       this.__relaysT.push('NO')
     })
-  }
-
-  __onError(e){
-    this.emit("error", e)
   }
 
   get CLOSE() {
@@ -61,7 +62,6 @@ class RelayJs extends EventEmitter {
   async connect({ port = undefined, options = undefined } = {}) {
     try {
       await this.board.connect(port, options)
-      this.board.on("error", this.__onError);
       await this.board.reset();
       await this.__initializeRelays();
     } catch (e) {

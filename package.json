@@ -1,6 +1,6 @@
 {
   "name": "@sdiricco/relayjs",
-  "version": "0.0.2",
+  "version": "0.0.5",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -17,7 +17,7 @@
   },
   "homepage": "https://github.com/sdiricco/relayjs#readme",
   "dependencies": {
-    "@sdiricco/boardjs": "^0.2.4"
+    "@sdiricco/boardjs": "^0.2.5"
   },
   "devDependencies": {
     "prompt": "^1.2.0"
