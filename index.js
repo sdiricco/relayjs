@@ -26,7 +26,7 @@ class RelayJs extends EventEmitter {
   }
 
   __onError(e){
-    this.emit(e)
+    this.emit("error", e)
   }
 
   get CLOSE() {
@@ -46,7 +46,7 @@ class RelayJs extends EventEmitter {
   }
 
   get relays(){
-    const relays = this.board.pins.map((pin, idx) => {
+    return this.board.pins.map((pin, idx) => {
       const pinOn = Boolean(pin.value);
       const relayT = this.__relaysT[idx];
       const relayClose = relayT === NO ? pinOn: !pinOn;
@@ -96,6 +96,9 @@ class RelayJs extends EventEmitter {
   }
 
   read(pin){
+    if (!this.board || !this.connected) {
+      throw ('write() failed. Missing connection')
+    }
     return this.board.pins[pin].value;
   }
 

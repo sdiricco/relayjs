@@ -19,7 +19,7 @@
  */
 
  const{RelayJs} = require('../index');
- const { Test } = require("./utils");
+ const { Test, prompt } = require("./utils");
  
  let main = async () => {
  
@@ -40,6 +40,8 @@
      console.log("connecting..");
      __connect = await relay.connect();
      console.log("connected");
+
+     await prompt.get('disconnect the board')
 
      await relay.write(13, relay.CLOSE);
 
