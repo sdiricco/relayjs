@@ -28,7 +28,9 @@
      "Verify the functionallity of connect() method in auto-connect mode"
    );
  
-   const relay = new RelayJs();
+   const relay = new RelayJs({
+     inverseOut: true
+   });
    let __connect = false;
  
    try {
@@ -37,24 +39,33 @@
        console.log("error raised:", e)
      });
 
-     console.log(relay.relays.length)
+
  
      console.log("connecting..");
      __connect = await relay.connect();
      console.log("connected");
 
-     await prompt.get('disconnect the board')
+     await relay.reset();
 
-     await relay.write(13, relay.CLOSE);
+     console.log(relay.__relaysT)
+     console.log(relay.relays.length)
+     console.log(relay.board.pins)
+
+    //  await prompt.get('disconnect the board')
+
+     await relay.write(0, relay.CLOSE);
 
      console.log(relay.relays);
      
-     if (relay.relays[13].state === relay.CLOSE) {
+     if (relay.relays[0].state === relay.CLOSE) {
         console.log('RELAY CLOSE')
      }
-     if (relay.relays[13].state === relay.OPEN) {
+     if (relay.relays[0].state === relay.OPEN) {
       console.log('RELAY OPEN')
      }
+
+     console.log(relay.read(0));
+     console.log(relay.read(5));
      
    } catch (e) {
      console.log("error catched:", e);
