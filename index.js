@@ -136,6 +136,7 @@ class RelayJs extends EventEmitter {
     options = undefined,
   } = {}) {
     try {
+      await this.board.disconnect();
       await this.board.connect(port, options);
       this.__findBoardConnected();
       this.__setSize(size);
