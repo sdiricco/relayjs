@@ -27,9 +27,7 @@ let main = async () => {
     "Verify the functionallity of connect() method in auto-connect mode"
   );
 
-  const relay = new RelayJs({
-    inverseOut: true,
-  });
+  const relay = new RelayJs();
   let __connect = false;
 
   try {
@@ -38,16 +36,18 @@ let main = async () => {
     });
 
     console.log("connecting..");
-    __connect = await relay.connect();
+    __connect = await relay.connect({size: 4});
     console.log("connected");
 
-    await relay.reset();
+    // await relay.reset();
 
+    console.log("relay.size", relay.size)
     console.log(relay.__relaysT);
     console.log(relay.relays.length);
+    console.log(relay.relays);
     console.log(relay.board.pins);
 
-    //  await prompt.get('disconnect the board')
+    await prompt.get('disconnect the board')
 
     await relay.write(0, relay.CLOSE);
 

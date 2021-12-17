@@ -34,32 +34,11 @@ const MAX_SIZE = 64;
 const MIN_SIZE = 1;
 
 class RelayJs extends EventEmitter {
-  constructor({size = undefined, inverseOut = false} = {}) {
+  constructor() {
     super();
     this.board = new Board();
 
-    //error check on size
-    if (size) {
-      if (typeof size !== "number") {
-        throw new Error("size must be type of number");
-      } else {
-        if (size < MIN_SIZE || size > MAX_SIZE) {
-          throw new Error(`size must be in range [${MIN_SIZE} - ${MAX_SIZE}]`);
-        } else {
-          this.size = Math.floor(size);
-        }
-      }
-    } else {
-      this.size = MAX_SIZE;
-    }
-
-    if (inverseOut && typeof inverseOut !== 'boolean') {
-      throw new Error("inverseOut must be type of boolean");
-    }
-    else {
-      this.inverseOut = inverseOut;
-    }
-
+    this.size = undefined;
     this.__relaysT = [];
     this.__cboard = undefined;
 
@@ -76,6 +55,28 @@ class RelayJs extends EventEmitter {
     });
   }
 
+  __setSize(size) {
+    if (!this.__cboard) {
+      return;
+    }
+    const pinsLenght = Object.keys(this.__cboard.pinMapping).length;
+    if (size) {
+      if (typeof size !== "number") {
+        throw new Error("size must be type of number");
+      } else {
+        if (size < MIN_SIZE || size > pinsLenght) {
+          throw new Error(
+            `size must be in range [${MIN_SIZE} - ${pinsLenght}]`
+          );
+        } else {
+          this.size = Math.floor(size);
+        }
+      }
+    } else {
+      this.size = pinsLenght;
+    }
+  }
+
   __findBoardConnected() {
     const boardConnected = boardSupported.find(
       (board) => board.pinCount === this.board.pins.length
@@ -87,9 +88,11 @@ class RelayJs extends EventEmitter {
   }
 
   async __initializeRelays() {
-    this.__relaysT = Object.keys(this.__cboard.pinMapping).map(() => {
-      return "NO";
-    });
+    this.__relaysT = Object.keys(this.__cboard.pinMapping)
+      .map(() => {
+        return "NO";
+      })
+      .slice(0, this.size);
   }
 
   get CLOSE() {
@@ -109,55 +112,66 @@ class RelayJs extends EventEmitter {
   }
 
   get relays() {
-    let relays = [];
+    if (!this.connected) {
+      return [];
+    }
+    let __relays = [];
     let idx = 0;
     for (const key in this.__cboard.pinMapping) {
       const pin = this.__cboard.pinMapping[key];
-      const brdValue = this.board.pins[pin].value;
-      const rlyValue = this.inverseOut ? Number(!Boolean(brdValue)) : brdValue
-      relays.push({
+      const rlyValue = this.board.pins[pin].value;
+      __relays.push({
         type: this.__relaysT[idx],
         state: rlyValue,
       });
       idx += 1;
     }
+    const relays = __relays.slice(0, this.size);
     return relays;
   }
 
-  async connect({ port = undefined, options = undefined } = {}) {
+  async connect({
+    port = undefined,
+    size = undefined,
+    options = undefined,
+  } = {}) {
     try {
       await this.board.connect(port, options);
-      await this.__findBoardConnected();
+      this.__findBoardConnected();
+      this.__setSize(size);
       await this.__initializeRelays();
       await this.reset();
     } catch (e) {
-      throw e;
+      throw new Error(e);
     }
     return true;
   }
 
   async disconnect() {
     try {
-      this.board.off("error", this.__onError);
       await this.board.disconnect();
     } catch (e) {
-      throw e;
+      throw new Error(e);
     }
   }
 
   async reset() {
     try {
       await this.board.execProm(() => {
+        let idx = 0;
         for (const key in this.__cboard.pinMapping) {
-          this.board.firmata.pinMode(
-            this.__cboard.pinMapping[key],
-            this.board.MODES.OUTPUT
-          );
-          const value = this.inverseOut ? this.board.HIGH : this.board.LOW
-          this.board.firmata.digitalWrite(
-            this.__cboard.pinMapping[key],
-            value
-          );
+          if (idx >= this.size) {
+            break;
+          }
+
+          const pin = this.__cboard.pinMapping[key];
+          const mode = this.board.MODES.OUTPUT;
+          const value = this.board.LOW;
+
+          this.board.firmata.pinMode(pin, mode);
+          this.board.firmata.digitalWrite(pin, value);
+
+          idx += 1;
         }
       });
     } catch (e) {
@@ -171,13 +185,14 @@ class RelayJs extends EventEmitter {
         !this.__cboard.pinMapping.hasOwnProperty.call(
           this.__cboard.pinMapping,
           pin
-        )
+        ) ||
+        pin >= this.size
       ) {
         throw new Error("write() failed. Invalid pin");
       }
+
       const __pin = this.__cboard.pinMapping[pin];
-      const __value = this.inverseOut ? Number(!Boolean(value)): value;
-      await this.board.digitalWrite(__pin, __value);
+      await this.board.digitalWrite(__pin, value);
     } catch (e) {
       throw new Error(e);
     }
@@ -188,16 +203,16 @@ class RelayJs extends EventEmitter {
       !this.__cboard.pinMapping.hasOwnProperty.call(
         this.__cboard.pinMapping,
         pin
-      )
+      ) ||
+      pin > this.size
     ) {
       throw new Error("write() failed. Invalid pin");
     }
-    if (!this.board || !this.connected) {
-      throw "write() failed. Missing connection";
+    if (!this.connected) {
+      throw new Error("write() failed. Missing connection");
     }
     const __pin = this.__cboard.pinMapping[pin];
-    const brdValue = this.board.pins[__pin].value;
-    const rlyValue = this.inverseOut ? Number(!Boolean(brdValue)) : brdValue
+    const rlyValue = this.board.pins[__pin].value;
     return rlyValue;
   }
 }
