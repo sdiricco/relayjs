@@ -36,10 +36,8 @@ let main = async () => {
     });
 
     console.log("connecting..");
-    __connect = await relay.connect({size: 4});
+    __connect = await relay.connect();
     console.log("connected");
-
-    // await relay.reset();
 
     console.log("relay.size", relay.size)
     console.log(relay.__relaysT);
